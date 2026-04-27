@@ -306,13 +306,14 @@ class RefreshToken(BlacklistMixin, Token):
         "iat",
         api_settings.JTI_CLAIM,
     )
+    access_token_class = None  # Will be set after AccessToken is defined
 
     @property
     def access_token(self):
         """
         Returns an access token created from this refresh token.
         """
-        access = AccessToken()
+        access = self.access_token_class()
 
         # Copy claims from refresh token to access token
         for claim, value in self.payload.items():
@@ -329,6 +330,10 @@ class AccessToken(Token):
 
     token_type = "access"
     lifetime = api_settings.ACCESS_TOKEN_LIFETIME
+
+
+# Set the access_token_class after AccessToken is defined
+RefreshToken.access_token_class = AccessToken
 
 
 class UntypedToken(Token):

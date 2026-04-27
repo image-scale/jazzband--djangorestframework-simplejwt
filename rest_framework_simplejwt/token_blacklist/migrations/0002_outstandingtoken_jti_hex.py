@@ -12,7 +12,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='outstandingtoken',
             name='jti_hex',
-            field=models.CharField(default='', max_length=255),
-            preserve_default=False,
+            field=models.CharField(default='', db_default='', max_length=255),
         ),
     ]

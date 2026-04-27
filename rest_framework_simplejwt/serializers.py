@@ -7,7 +7,7 @@ from rest_framework import exceptions, serializers
 from .exceptions import TokenError
 from .settings import api_settings
 from .tokens import RefreshToken, SlidingToken, UntypedToken
-from .utils import get_md5_hash_password
+from .utils import datetime_from_epoch, get_md5_hash_password
 
 
 class PasswordField(serializers.CharField):
@@ -156,6 +156,22 @@ class TokenRefreshSerializer(serializers.Serializer):
             refresh.set_exp()
             refresh.set_iat()
 
+            # Create an OutstandingToken for the new refresh token
+            if api_settings.BLACKLIST_AFTER_ROTATION:
+                if apps.is_installed("rest_framework_simplejwt.token_blacklist"):
+                    from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+
+                    jti = refresh.payload.get(api_settings.JTI_CLAIM)
+                    exp = refresh.payload.get("exp")
+
+                    OutstandingToken.objects.create(
+                        user=None,  # User may not be known from token alone
+                        jti=jti,
+                        token=str(refresh),
+                        expires_at=datetime_from_epoch(exp),
+                        created_at=refresh.current_time,
+                    )
+
             data["refresh"] = str(refresh)
 
         return data
@@ -222,7 +238,7 @@ class TokenVerifySerializer(serializers.Serializer):
                 if jti:
                     from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
                     if BlacklistedToken.objects.filter(token__jti=jti).exists():
-                        raise TokenError("Token is blacklisted")
+                        raise serializers.ValidationError("Token is blacklisted")
 
         return {}
 
