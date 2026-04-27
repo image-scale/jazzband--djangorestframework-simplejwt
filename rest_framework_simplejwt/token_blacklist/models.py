@@ -8,8 +8,6 @@ class OutstandingToken(models.Model):
     A model to track outstanding tokens that have been issued.
     """
 
-    id = models.BigAutoField(primary_key=True, serialize=False)
-
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -25,7 +23,6 @@ class OutstandingToken(models.Model):
 
     class Meta:
         ordering = ("user",)
-        abstract = False
 
     def __str__(self):
         return f"Token for {self.user} ({self.jti})"
@@ -36,17 +33,12 @@ class BlacklistedToken(models.Model):
     A model to track blacklisted tokens.
     """
 
-    id = models.BigAutoField(primary_key=True, serialize=False)
-
     token = models.OneToOneField(
         OutstandingToken,
         on_delete=models.CASCADE,
     )
 
     blacklisted_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        abstract = False
 
     def __str__(self):
         return f"Blacklisted token for {self.token.user}"
