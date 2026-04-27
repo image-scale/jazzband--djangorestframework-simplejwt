@@ -39,6 +39,20 @@ class InvalidToken(AuthenticationFailed):
     default_detail = _("Token is invalid or expired")
     default_code = "token_not_valid"
 
+    def __init__(self, detail=None, code=None):
+        if detail is None:
+            detail = self.default_detail
+        if code is None:
+            code = self.default_code
+
+        # Structure detail to include both 'detail' and 'code' keys
+        if isinstance(detail, str):
+            detail = {"detail": detail, "code": code}
+        elif isinstance(detail, dict) and "code" not in detail:
+            detail["code"] = code
+
+        super().__init__(detail, code)
+
 
 # Re-export AuthenticationFailed for convenience
 AuthenticationFailed = AuthenticationFailed

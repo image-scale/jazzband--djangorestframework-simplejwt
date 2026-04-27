@@ -50,9 +50,11 @@ class TokenObtainSerializer(serializers.Serializer):
             # Call ON_LOGIN_FAILED hook if set
             on_login_failed = api_settings.ON_LOGIN_FAILED
             if on_login_failed is not None:
-                # Mask the password
-                masked_credentials = authenticate_kwargs.copy()
-                masked_credentials["password"] = "*" * len(attrs["password"])
+                # Mask the password with 20 asterisks and exclude request
+                masked_credentials = {
+                    self.username_field: attrs[self.username_field],
+                    "password": "*" * 20,
+                }
                 on_login_failed(masked_credentials, self.context.get("request"))
 
             raise exceptions.AuthenticationFailed(

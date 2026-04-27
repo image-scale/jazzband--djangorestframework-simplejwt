@@ -5,7 +5,9 @@ from uuid import uuid4
 from django.apps import apps
 from django.conf import settings
 
-from .exceptions import ExpiredTokenError, TokenBackendError, TokenError
+from .exceptions import ExpiredTokenError, TokenBackendError, TokenBackendExpiredToken, TokenError
+
+TYPE_CHECKING = TYPE_CHECKING  # Re-export for tests
 from .settings import api_settings
 from .state import token_backend
 from .utils import aware_utcnow, datetime_from_epoch, datetime_to_epoch, get_md5_hash_password
@@ -36,6 +38,8 @@ class Token:
             # Decode the token
             try:
                 self.payload = self.token_backend.decode(token, verify=verify)
+            except TokenBackendExpiredToken:
+                raise ExpiredTokenError("Token is expired")
             except TokenBackendError:
                 raise TokenError("Token is invalid or expired")
 
